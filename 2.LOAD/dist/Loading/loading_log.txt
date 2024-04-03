@@ -1,0 +1,4 @@
+Loaded hourly24_production_2024-04-01.csv into table solar
+All CSV files loaded into PostgreSQL successfully.
+Loaded hourly24_production_2024-04-02.csv into table solar
+All CSV files loaded into PostgreSQL successfully.
