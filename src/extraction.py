@@ -47,7 +47,7 @@ class EMAWebScraper:
     # SETTING UP WEBDRIVER
     def setup_driver(self):
         edge_options = Options()
-        # edge_options.add_argument('--headless')
+        edge_options.add_argument('--headless')
         edge_options.add_argument('--disable-gpu')
         edge_options.add_argument("--remote-debugging-port=9222")
         service = Service(executable_path="/media/lucas/Files/2.Projetos/3.Solar/.venv/bin/msedgedriver")
@@ -129,7 +129,7 @@ class EMAWebScraper:
             }
             response = requests.post(url, headers=headers, data=payload)
             
-            file_date = query_date.strftime('%Y-%m-%d')
+            file_date = f"{query_date[:4]}-{query_date[4:6]}-{query_date[6:]}"
             
             output_file = os.path.join(self.jsondir, f"hourly24_production_{file_date}.json")
             
