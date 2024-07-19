@@ -1,0 +1,493 @@
+<html><head>
+	<meta name="renderer" content="webkit">
+	<meta name="force-rendering" content="webkit">
+	<meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1">
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+	<meta name="viewport" content="width=1345, initial-scale=1, minimum-scale=0.4, maximum-scale=2.0, user-scalable=yes">
+	<meta name="apple-mobile-web-app-capable" content="yes">
+	<meta name="format-detection" content="telephone=no">
+	<title>apsystemsema</title>
+	<link rel="shortcut icon" href="https://apsystemsema.com:443/ema/imagesDy-1.0/login/logo.png">
+	<link rel="stylesheet" type="text/css" href="https://apsystemsema.com:443/ema/cssDy-1.0/opt/fonts/fontController.css">
+	<link rel="stylesheet" type="text/css" href="https://apsystemsema.com:443/ema/cssDy-1.0/opt/opt.style.css?341">
+	<link rel="stylesheet" type="text/css" href="https://apsystemsema.com:443/ema/cssDy-1.0/opt/goToTop.css?1">
+	<link rel="stylesheet" type="text/css" href="https://apsystemsema.com:443/ema/cssDy-1.0/opt/opt.ui.css">
+	<link rel="stylesheet" type="text/css" href="https://apsystemsema.com:443/ema/cssDy-1.0/opt/opt.icono.css?4">
+	
+		<script type="text/javascript" src="https://apsystemsema.com:443/ema/jsSt-1.0/jquery/jquery-1.11.1.min.js"></script>
+	
+	<script type="text/javascript" src="https://apsystemsema.com:443/ema/jsDy-1.0/util/getRootPath.js?20210407"></script>
+	<script type="text/javascript" src="https://apsystemsema.com:443/ema/jsDy-1.0/message/opt_message.js"></script>
+	<script type="text/javascript" src="https://apsystemsema.com:443/ema/jsDy-1.0/util/goToTop.js?1"></script>
+	<script type="text/javascript" src="https://apsystemsema.com:443/ema/jsDy-1.0/util/util.js?20240202"></script>
+	<script type="text/javascript" src="https://apsystemsema.com:443/ema/jsDy-1.0/opt/opt_left_menu.js?202111110234"></script>
+	<script type="text/javascript">
+		$(function() {
+			$(".mainmenu .nav-h-report").addClass("header_select");
+			$(".mainmenu .nav-h-report").addClass("nav-h-report-sel");
+			$("#report_head").removeClass("onselect_a");
+			$("#report_head").addClass("select_a");
+			$("#report_head span").removeClass("onselect_span");
+			$("#report_head span").addClass("select_span");
+			var flag = getCookie("manageFlag");
+			if (flag == "") {
+				flag = "15";
+			}
+			if (flag == "15" || flag == "16" || flag == "14" || flag == "13" || flag == "18" || flag == "159" || flag == "160" || flag == "165") {
+				// 合理的manageFlag
+			} else {
+				setCookie("manageFlag",15,1);
+			}
+			adjustPage();
+		});
+		function intoRightIframe(element, route) {
+			// Installers Setting
+			document.getElementById('configuration_body').src = getRootPath() + route;
+		}
+	</script>
+</head>
+<body id="body">
+	 
+
+
+
+
+
+<link rel="stylesheet" type="text/css" href="https://apsystemsema.com:443/ema/cssDy-1.0/opt/opt.head.css?20220518">
+<link rel="stylesheet" type="text/css" href="https://apsystemsema.com:443/ema/cssDy-1.0/opt/opt.aps.head.css?20210729">
+<link rel="stylesheet" type="text/css" href="https://apsystemsema.com:443/ema/cssDy-1.0/opt/opt.style.css?20230929">
+<script type="text/javascript" src="https://apsystemsema.com:443/ema/jsDy-1.0/opt/opt_main.js?20230309"></script>
+<script type="text/javascript">
+	function clickCloseAlert(userId){
+		setCookie("showFlag",0,1);
+		$("#version_update_instructions").hide();
+		//缓存中没有视图信息//记录确认版本信息
+		$.ajax({
+			type: "post",
+			url: getRootPath()+"ajax/newCheckRegisterAjax/recordLogin",
+			data:{"userId":userId}
+		});
+	}
+	function getNoticeList(userId){
+		$.ajax({
+			type: "post",
+			url: getRootPath()+"ajax/newCheckRegisterAjax/getVersionAndAnnouncementListToRemind",
+			data:{"userId":userId},
+			dataType: 'json',
+			success : function(result){
+				if (result!=null && result.list) {
+					//语言设置
+					let language = 'detail_'+getCookie("language");
+					for(let key in result.list){
+						let content = result.list[key][language];
+						let type = result.list[key].type;
+						if(type=='0'){
+							$("#version_update_instructions").show();
+							$("#version_instructions").html(content);
+						}
+						if(type=='1' && getCookie("noticeFlag")=='1'){
+							setCookie("noticeFlag",1,1);
+							$("#notice_update_instructions").show();
+							$("#notice_instructions").html(content);
+						}
+	                } 
+				}else{
+					
+				}
+			},
+	        error:function(){
+	        }
+		});
+	}
+	
+	//设置逆变器版本更新信息记录
+	function getInverterNoticeList(userId){
+		$.ajax({
+			type: "post",
+			url: getRootPath()+"ajax/newCheckRegisterAjax/getTipsByUserId",
+			data:{"userId":userId},
+			dataType: 'json',
+			success : function(result){
+				if (result!=null) {
+					let hasTips = result.hasTips;
+					let tips = result.tips;
+					let showTime = Number(result.showTime)*1000;
+					if(hasTips==true){
+						$("#inverter_version_update").show();
+						$("#inverter_version").html("<div  style='display:inline;white-space: pre-line;'>"+tips+"</div>");
+						setInverterVersionDiv(showTime);
+					}
+				}else{
+				}
+			},
+	        error:function(){
+	        }
+		});
+	}
+	
+	function setInverterVersionDiv(t1){
+		setTimeout(function(){
+		    document.getElementById("inverter_version_update").style.display='none';
+		}, t1);
+	}
+	
+	//改变用户的隐私政策和协议条款标志
+	function confirmUserPrivacy(userId){
+		$.ajax({
+			type: "post",
+			url: getRootPath()+"ajax/newCheckRegisterAjax/confirmUserPrivacy",
+			data:{"userId":userId},
+			dataType: 'json',
+			success : function(result){
+				if (result!=null) {
+					let confirm = result.confirm;
+					if(confirm){
+						setCookie("privateFlag",1,1);
+						$("#private_version_update").hide();
+					}
+				}else{
+				}
+			},
+	        error:function(){
+	        }
+		});
+	}
+	
+	//关闭逆变器升级的弹出框页面
+	function clickCloseInverterNotice(){
+		//setCookie("noticeFlag",0,1);
+		//setCookie("noticenumber",0,1);
+		$("#inverter_version_update").hide();
+	}
+	function clickClosePrivateNotice(){
+		//后台去把对应的用户的隐私政策标志给改掉
+		var userId = document.getElementById("userId").value;
+		confirmUserPrivacy(userId);	
+	}
+	function clickCloseNotice(){
+		setCookie("noticeFlag",0,1);
+		//setCookie("noticenumber",0,1);
+		$("#notice_update_instructions").hide();
+	}
+	$(function(){
+		var userId = document.getElementById("userId").value;
+		let inverterUpdateVersion = "2";
+		getNoticeList(userId);
+		if(inverterUpdateVersion=='1'){
+			getInverterNoticeList(userId);
+		}
+		showHidePrivate();
+		showLanguge();
+	});
+	
+	//首页右小角的隐私政策提醒
+	function showHidePrivate(){
+		let privateFlag = getCookie("privateFlag");
+		let emaDemo = "null";
+		if(privateFlag=="0" && emaDemo!="1"){
+			$("#private_version_update").show();
+		}
+	}
+	function showLanguge(){
+		let emaDemo = "null";
+		let localEnvironment = "aws";
+		let areaFlag = "null";
+		if(emaDemo === "1" ){
+			if(areaFlag === "china"){
+				//china
+				$("#languageSelect li:nth-child(1)").hide();
+				$("#languageSelect li:nth-child(3)").hide();
+				$("#languageSelect li:nth-child(4)").hide();
+				$("#languageSelect li:nth-child(6)").hide();
+				$("#languageSelect li:nth-child(7)").hide();
+				$("#languageSelect li:nth-child(8)").hide();
+				$("#languageSelect li:nth-child(9)").hide();
+				$("#languageSelect li:nth-child(10)").hide();
+				$("#languageSelect li:nth-child(11)").hide();
+			}
+		} else {
+			if(localEnvironment === "china"){
+				//china
+				$("#languageSelect li:nth-child(1)").hide();
+				$("#languageSelect li:nth-child(3)").hide();
+				$("#languageSelect li:nth-child(4)").hide();
+				$("#languageSelect li:nth-child(6)").hide();
+				$("#languageSelect li:nth-child(7)").hide();
+				$("#languageSelect li:nth-child(8)").hide();
+				$("#languageSelect li:nth-child(9)").hide();
+				$("#languageSelect li:nth-child(10)").hide();
+				$("#languageSelect li:nth-child(11)").hide();
+			}
+		}
+	}
+	/* zsy,退出界面*/
+	function logout(logoutActionUrl,areaFlag,switchaddress,emaDemo){
+		if(areaFlag=='aws' &&  emaDemo=='1'){
+			window.location.href=switchaddress+logoutActionUrl+".action";
+		}else{
+			window.location.href=getRootPath()+logoutActionUrl+".action";
+		}
+		//saveUserUsingRecord(1010);
+	}
+	function viewDetailPrivate(userId){
+		setCookie("privateFlag",1,1);
+		$("#private_version_update").hide();
+		 window.open(getRootPath()+'intoAwsPrivacyAgreementAndTermsOfService.action?userId='+userId,"_blank");
+	}
+</script>
+<div class="header">
+	<div class="container">
+		
+			<a class="logo" onclick="intoIndexPage('aws')" style="cursor: pointer;"><img class="logo-img" src="https://apsystemsema.com:443/ema/imagesSt-1.0/logo-apsa.png" alt=""></a>
+		
+		
+	</div>
+	<ul class="mainmenu">
+		<li class="nav-menu nav-h-dashboard"><a id="dashboard_head" class="onselect_a" onclick="dashboardClick()"><span class="onselect_span"></span>DASHBOARD</a></li>
+		
+		
+			<li class="nav-menu nav-h-module"><a id="module_head" class="onselect_a" onclick="moduleClick()"><span class="onselect_span"></span>MODULE</a></li>
+		
+		
+		<li class="nav-menu nav-h-report header_select nav-h-report-sel"><a id="report_head" class="select_a" onclick="reportClick('0','0')"><span class="select_span"></span>REPORT</a></li>
+		
+		<li class="nav-menu nav-h-managementcustomer"><a id="managementcustomer_head" class="onselect_a" onclick="managementClickCustomer('2c9f95c77bc8fcb3017bf3dda5b453bc')"><span class="onselect_span"></span>SETTING</a></li>
+	</ul>
+	<div class="header_div_status">
+		<div class="div_menu2">
+		<input type="hidden" id="userId" value="2c9f95c77bc8fcb3017bf3dda5b453bc">
+			<ul>
+				<li style="width:67px"><span>English</span>
+				<ul id="languageSelect" style="z-index: 1;">
+						<li><a onclick="changeEnglish()">English</a></li>
+						<li><a onclick="changeChinese()">中文</a></li>
+						<li><a onclick="changeFrench()">Français</a></li>
+						<li><a onclick="changePortuguese()">Português</a></li>
+						<li><a onclick="changeChineseTW()">繁體中文</a></li>
+						<li><a onclick="changeSpanishES()">Español</a></li>
+						<li><a onclick="changeDeutschDE()">Deutsch</a></li>
+						<li><a onclick="changePolskaPL()">Polska</a></li>
+						<li><a onclick="changeNederlandsNL()">Nederlands</a></li>
+						<li><a onclick="changeThailandTH()">ภาษาไทย</a></li>
+						<li><a onclick="changeVienamVI()">Tiếng Việt</a></li>
+				</ul>
+				</li>
+				<li style="width:2px">|</li>
+				<li style="width:64px"><span>Settings</span>
+					<ul>
+						
+							<!-- 设置页面  test
+							-->
+							<li onclick="managementClickCustomer('2c9f95c77bc8fcb3017bf3dda5b453bc')"><a>Settings</a></li>
+						
+						<li onclick="intoFaq(10)"><a>Help</a></li>
+					</ul>
+				</li>
+				<li style="width:2px">|</li>
+				<li style="width:60px">
+					<span style="width:61px;margin-top:2px;"><a onclick="logout('logoutEMA','null','https://www.apsystemsema.com/ema/','null')">Sign out</a></span>
+				</li>
+			</ul>
+		</div>
+		<div class="div_status_text">
+			<div>Deusa Aquino</div>
+			<div>Atibaia
+				
+					,Sao Paulo,Brazil 
+				
+			</div>
+		</div>
+	</div>
+	
+	<div style="position:fixed;bottom:0;right:0;z-index: 9999;">
+		<div class="version-update-instructions-main" id="notice_update_instructions" style="display:none">
+			<div class="version-update-instructions-title">
+				<h7>Tips</h7>
+				<i style="float:right;margin-top:5px; cursor: pointer;color:#fff" class="icono-cross" onclick="clickCloseNotice()"></i>
+			</div>
+			<div class="version-update-instructions-body" id="notice_instructions">
+			</div>
+		</div>
+	
+		<div class="version-update-instructions-main " id="version_update_instructions" style="display:none">
+			<div class="version-update-instructions-title">
+				<h7 style="float: left;">Tips</h7>
+				<i style="float:right;top:5px;cursor: pointer;color:#fff" class="icono-cross" onclick="clickCloseAlert('2c9f95c77bc8fcb3017bf3dda5b453bc')"></i>
+			</div>
+			<div class="version-update-instructions-body" id="version_instructions">
+			</div>
+		</div>
+		<div class="version-update-instructions-main " id="inverter_version_update" style="display:none">
+			<div class="version-update-instructions-title">
+				<h7 style="float: left;">Tips</h7>
+				<i style="float:right;top:5px;cursor: pointer;color:#fff" class="icono-cross" onclick="clickCloseInverterNotice()"></i>
+			</div>
+			<div class="version-update-instructions-body" id="inverter_version">
+			</div>
+		</div>
+		<div class="private-update-instructions-main" id="private_version_update" style="display:none">
+			<div>
+			    <div style="vertical-align:middle;">
+				<img src="https://apsystemsema.com:443/ema/imagesSt-1.0/opt/notice.png" style="vertical-align:bottom;margin-left:20px;margin-top:10px;width:8%"> 
+				<span style="margin-left:3px;color: #ff8200;margin-top:20px;font-weight:bold">Notice</span>
+				<i style="float:right;margin-right:10px;top:10px;cursor: pointer;" class="icono-cross" onclick="clickClosePrivateNotice()"></i>
+			    </div>
+			</div>
+			<div class="version-update-instructions-body" style="margin-top:10px;font-weight:bold" id="private_version">
+			   We have updated our privacy policy and terms of service. You can click to review the details or close the notice.
+			</div>
+			<div class="private-update-instructions-body" id="private_version">
+			    <a class="orange" onclick="viewDetailPrivate('2c9f95c77bc8fcb3017bf3dda5b453bc')" target="_blank">View Detail</a>           
+			</div>
+		</div>
+	</div>
+	
+</div>
+<style>
+	.version-update-instructions-main {
+		right: 2px;
+		bottom: 2px;
+		background:#fff;
+		width: 350px;
+		background-color: rgb(255, 255, 255);
+		z-index: 9999;
+		color: rgb(102, 102, 102);
+		border: 1px solid #ff8200;
+		text-align: left;
+		border-radius: 2px 2px 0px 0px;
+		padding: 0px;
+		display: none;
+	}
+	.private-update-instructions-main {
+		bottom: 2px;
+		background:#fff;
+		height:160px;
+		width: 350px;
+		background-color: rgb(255, 255, 255);
+		z-index: 9999;
+		color: rgb(102, 102, 102);
+		border: 3px solid #ff8200;
+		text-align: center;
+		border-radius: 1px 1px 0px 0px;
+		padding: 0px;
+		display: none;
+	}
+	
+	.private-update-instructions-body {
+	    font-weight:bold;
+	    margin-top:10px;
+	    width:350px;
+	    text-align: center;
+	}
+	.version-update-instructions-main-show {
+		-moz-animation: show 2s;
+	}
+	
+	.version-update-instructions-main-hide {
+		-moz-animation: hide 1s;
+	}
+	
+	.version-update-instructions-title {
+		height: 20px;
+		line-height: 20px;
+		padding: 0px 8px;
+		border-bottom: 1px solid #ff8200;
+		background: #ff8200;
+		color:#fff;
+	}
+	
+	.version-update-instructions-title11 {
+		height: 30px;
+		line-height: 30px;
+		padding: 0px 20px;
+		border-bottom: 1px solid #ff8200;
+		background: #ff8200;
+		color:#fff;
+	}
+	
+	.version-update-instructions-body {
+		padding:10px;
+		display: flex;
+		flex-direction: row;
+    	flex-wrap: wrap;
+	}
+	
+	.version-update-instructions-body>div {
+		min-height:20px;
+		margin-bottom:3px;
+	}
+	.orange{
+		color: #FB9337;
+		cursor: pointer;
+	}
+	
+	@-moz-keyframes show /* Firefox */
+	{
+	from {opacity:0;}
+	to {opacity:1;}
+	}
+	
+	@-moz-keyframes hide /* Firefox */
+	{
+	from {opacity:1;}
+	to {opacity:0;}
+	}
+</style>
+	
+	<div class="vernav2 iconmenu" id="reportbody" style="height: 750px;">
+		<input id="meterFlag" type="hidden" value="0">
+		<ul id="menuUl">
+			
+				<li>
+					<div class="childli" id="summary" url="security/optsecondmenu/EnterSummaryReport.action">
+						<i class="demo-icon icon-home"></i>
+						<label class="parentlabel">Summary Report</label>
+					</div>
+				</li>
+			
+			
+			
+			<li>
+				<div class="childli current" id="systemDataCustomer">
+					<i class="demo-icon icon-chart-area-1"></i>
+					
+					<label class="parentlabel">System Data</label>
+					
+					
+					<i class="demo-icon icon-down-open-mini"></i>
+				</div>
+				<ul style="display: block;">
+				    
+					
+						<li id="ecuData" onclick="intoRightIframe(this, 'security/optsecondmenu/intoSysAndECULevel.action')" class="current"><i class="linechild"></i><label class="childlabel">
+						
+						
+						ECU Data
+								
+						</label></li>
+					
+					
+					
+	
+				</ul>
+			</li>
+			
+			
+			
+			<li>
+				<div class="childli" id="icono-report" url="security/optmainmenu/intodownloadReport.action?meterFlag=0">
+					<i class="demo-icon icon-download"></i>
+					<label class="parentlabel">Download Report</label>
+				</div>
+			</li>
+		</ul>
+		<a class="togglemenu"><i class="lineleft"></i><i class="icono-toogleleft"></i><i class="lineright"></i></a>
+	</div>
+	
+	<div class="centercontent" style="width: 1059px; height: 750px;">
+		<div id="contentwrapper" class="contentwrapper">
+			<iframe src="https://apsystemsema.com/ema/security/optsecondmenu/intoSysAndECULevel.action" id="configuration_body" style="width: 100%; height: 750px;"></iframe>
+		</div>
+	</div>
+
+</body></html>

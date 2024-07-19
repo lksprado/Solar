@@ -1,6 +1,0 @@
-Loaded hourly24_production_2024-03-30.csv into table solar
-Error loading CSV files into PostgreSQL: name 'done_folder' is not defined
-Loaded hourly24_production_2024-03-30.csv into table solar
-All CSV files loaded into PostgreSQL successfully.
-Loaded hourly24_production_2024-03-31.csv into table solar
-All CSV files loaded into PostgreSQL successfully.

@@ -26,6 +26,7 @@ class EMAWebScraper:
         self.base_url = 'https://apsystemsema.com/ema/index.action'
         self.cookies = None
         self.user_id = None
+        self.servicedir = self.config['servicedir']
 
     # IDENTIFY MISSING DAYS AND APPEND TO LIST
     def read_missing(self, missing_file):
@@ -50,7 +51,7 @@ class EMAWebScraper:
         edge_options.add_argument('--headless')
         edge_options.add_argument('--disable-gpu')
         edge_options.add_argument("--remote-debugging-port=9222")
-        service = Service(executable_path="/media/lucas/Files/2.Projetos/3.Solar/.venv/bin/msedgedriver")
+        service = Service(executable_path=self.servicedir)
         self.driver = webdriver.Edge(options=edge_options)
 
     # LOGGING IN

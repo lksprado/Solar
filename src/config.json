@@ -1,0 +1,11 @@
+{
+    "username": "deusa",
+    "password": "deusa1",
+    "jsondir": "/media/lucas/Files/2.Projetos/0.mylake/bronze/solar_project",
+    "servicedir": "/media/lucas/Files/2.Projetos/3.Solar/.venv/bin/msedgedriver",
+    "config_file_path": "/media/lucas/Files/2.Projetos/3.Solar/src/config.json",
+    "input_folder": "/media/lucas/Files/2.Projetos/0.mylake/silver/solar_project",
+    "done_folder":"/media/lucas/Files/2.Projetos/0.mylake/silver/solar_project/sql_table_done",
+    "connection_string": "postgresql://postgres:12345@localhost:5432/postgres",
+    "output_folder": "/media/lucas/Files/2.Projetos/3.Solar/"
+}
