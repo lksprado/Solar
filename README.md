@@ -1,7 +1,7 @@
 # HOME SOLAR PANEL DATA FROM ETL TO VIZ
 
 ### DESCRIPTION
-This is a personal project that emulates and end-to-end Data project applying data engineering concepts and using python best practices for coding.
+This is a personal project that emulates and end-to-end Data project applying data engineering concepts and using python best practices for coding (OOP).
 It consists of 4 steps:
 
 1. Missing.py   
@@ -17,5 +17,5 @@ Converts json to csv file, remove unecessary columns, parse date and creates csv
 Upload csv file contents to Postgres staging table and calls procedure to insert in the final table;
 
 ### RESULT
-The project is scheduelled with airflow (docker) and runs daily if my computer is on.   
-We can see how the Solar Panel works through all the years and seasons. 
+The project is schedulled to run from a Airflow from docker container, daily, at 10pm.  
+The Viz can be accessed in the following link: https://public.tableau.com/app/profile/lucas8230/viz/HOMESOLARPANELPRODUCTION2021-2024/Painel1
