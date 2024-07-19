@@ -1,0 +1,13 @@
+# created by virtualenv automatically
+
+/tests
+/src/config.json
+.venv
+missing_days.csv
+combined_data.csv
+test_mmissing_days.csv
+transformation_log.txt 
+loading_log.txt 
+__init__.py
+__pycache__
+
