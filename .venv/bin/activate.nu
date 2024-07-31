@@ -32,7 +32,7 @@ export-env {
       }
     }
 
-    let virtual_env = '/media/lucas/Files/2.Projetos/3.Solar/.venv'
+    let virtual_env = '/media/lucas/Files/2.Projetos/solar/.venv'
     let bin = 'bin'
 
     let is_windows = ($nu.os-info.family) == 'windows'

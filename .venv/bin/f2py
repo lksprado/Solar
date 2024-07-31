@@ -1,4 +1,4 @@
-#!/media/lucas/Files/2.Projetos/3.Solar/.venv/bin/python
+#!/media/lucas/Files/2.Projetos/solar/.venv/bin/python
 # -*- coding: utf-8 -*-
 import re
 import sys

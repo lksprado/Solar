@@ -1,16 +1,23 @@
 import os
 import psycopg2
 import pandas as pd
-from extraction import EMAWebScraper
+import json
 
 class Loader:
-    def __init__(self, config_file, log_file):
-        scraper = EMAWebScraper(config_file)
-        self.config = scraper.read_config(config_file)
-        self.log_file = log_file
+    def __init__(self, config_file='src/config.json'):
+        self.config_file = config_file
+        self.config = self.read_config()
+        self.silver_dir = self.config.get('silver_dir')
+        self.done_folder = self.config.get('done_folder')
         self.conn = psycopg2.connect(self.config['connection_string'])
         self.cursor = self.conn.cursor()
 
+    # READING CONFIG FILE
+    def read_config(self):
+        with open(self.config_file, 'r') as file:
+            config_data = json.load(file)
+        return config_data
+    
     def create_stored_procedure(self):
         create_proc_query = """
         CREATE OR REPLACE FUNCTION process_staging_data() RETURNS VOID AS $$
@@ -29,72 +36,43 @@ class Loader:
         self.conn.commit()
 
     def load_csv_files_to_staging(self, input_folder):
-        try:
-            # Iterate through each CSV file in the input folder
-            for filename in os.listdir(input_folder):
-                if filename.endswith('.csv'):
-                    file_path = os.path.join(input_folder, filename)
-                    table_name = 'dw_lcs.tb_solar_stg'  # Table name
+        # Iterate through each CSV file in the input folder
+        for filename in os.listdir(input_folder):
+            if filename.endswith('.csv') and filename != 'transformation_status.csv':
+                file_path = os.path.join(input_folder, filename)
+                table_name = 'dw_lcs.tb_solar_stg'  # Table name
 
-                    # Load CSV data into PostgreSQL table
-                    with open(file_path, 'r') as f:
-                        next(f)  # Skip header row
-                        self.cursor.copy_expert(f"COPY {table_name} FROM STDIN CSV", f)
+                # Load CSV data into PostgreSQL table
+                with open(file_path, 'r') as f:
+                    next(f)  # Skip header row
+                    self.cursor.copy_expert(f"COPY {table_name} FROM STDIN CSV", f)
 
             # Commit 
             self.conn.commit()
 
-            with open(self.log_file, 'a') as logfile:
-                logfile.write("All CSV files loaded into PostgreSQL successfully.\n")
-        except Exception as e:
-            with open(self.log_file, 'a') as logfile:
-                logfile.write(f"Error loading CSV files into PostgreSQL: {e}\n")
-    
-
     def trigger_stored_procedure(self):
-        try:
-            self.cursor.execute("CALL process_staging_data();")
-            self.conn.commit()
-            with open(self.log_file, 'a') as logfile:
-                logfile.write("Stored procedure executed successfully.\n")
-        except Exception as e:
-            with open(self.log_file, 'a') as logfile:
-                logfile.write(f"Error executing stored procedure: {e}\n")
+        self.cursor.execute("CALL process_staging_data();")
+        self.conn.commit()
 
     def close_connection(self):
         self.cursor.close()
         self.conn.close()
     
-    def move_files(self, input_folder,done_folder):
-            for filename in os.listdir(input_folder):
-                if filename.endswith('.csv') and filename != 'transformation_status.csv':
-                    file_path = os.path.join(input_folder, filename)
-                    os.rename(file_path, os.path.join(done_folder, filename))
-            
+    def move_files(self):
+        for filename in os.listdir(self.silver_dir):
+            if filename.endswith('.csv') and filename != 'transformation_status.csv':
+                file_path = os.path.join(self.silver_dir, filename)
+                os.rename(file_path, os.path.join(self.done_folder, filename))
 
-def main():
-    config_file = "/media/lucas/Files/2.Projetos/3.Solar/src/config.json"
-    log_file = '/media/lucas/Files/2.Projetos/3.Solar/loading_log.txt'
+    def run(self):
+        success = False
 
-    loader = Loader(config_file, log_file)
-    input_folder = loader.config['input_folder']
-    done_folder = loader.config['done_folder']
-    success = False
-
-    try:
-        loader.create_stored_procedure()
-        loader.load_csv_files_to_staging(input_folder)
-        loader.trigger_stored_procedure()
+        self.create_stored_procedure()
+        self.load_csv_files_to_staging()
+        self.trigger_stored_procedure()
         success = True  # Mark as successful if no exceptions occurred
-    except Exception as e:
-        with open(log_file, 'a') as logfile:
-            logfile.write(f"An error occurred: {e}\n")
-    finally:
         if success:
-            loader.move_files(input_folder, done_folder)
-        loader.close_connection()
-
-if __name__ == "__main__":
-    main()
+            self.move_files()
+        self.close_connection()
 
 

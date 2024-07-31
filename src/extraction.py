@@ -17,16 +17,24 @@ from selenium.webdriver.support.ui import Select
 from selenium.webdriver.common.action_chains import ActionChains
 
 class EMAWebScraper:
-    def __init__(self, config_file):
+    def __init__(self, config_file: str = 'src/config.json'):
         self.driver = None
-        self.config = self.read_config(config_file)
-        self.username = self.config['username']
-        self.password = self.config['password']
-        self.jsondir = self.config['jsondir']
+        self.config_file = config_file
+        self.config = self.read_config()
+        self.username = self.config.get('username')
+        self.password = self.config.get('password')
+        self.bronze_dir = self.config.get('bronze_dir')
         self.base_url = 'https://apsystemsema.com/ema/index.action'
         self.cookies = None
         self.user_id = None
-        self.servicedir = self.config['servicedir']
+        self.service_dir = self.config.get('service_dir')
+        self.missing_file = self.config.get('missing_file')
+        
+        # READING CONFIG FILE
+    def read_config(self):
+        with open(self.config_file, 'r') as file:
+            config_data = json.load(file)
+        return config_data
 
     # IDENTIFY MISSING DAYS AND APPEND TO LIST
     def read_missing(self, missing_file):
@@ -39,11 +47,6 @@ class EMAWebScraper:
         days = sorted(days, key=lambda date: datetime.datetime.strptime(date, '%Y-%m-%d'))
         return days        
         
-    # READING CONFIG FILE
-    def read_config(self, config_file):
-        with open(config_file, 'r') as file:
-            config_data = json.load(file)
-        return config_data
 
     # SETTING UP WEBDRIVER
     def setup_driver(self):
@@ -141,26 +144,29 @@ class EMAWebScraper:
         except Exception as e:
             logging.error("An error occurred: %s", str(e))
 
-    def run(self, missing_file):
-            self.setup_driver()
-            self.login()
-            self.ajax_finder()
-            days = self.read_missing(missing_file)
-            max_date = max(days)
-            
-            for day in days:
-                if day > max_date:
-                    break
-                query_date = datetime.datetime.strptime(day, '%Y-%m-%d').strftime('%Y%m%d')
-                self.fetch_production_data(query_date)
-            
-            self.driver.quit()
+    def run(self):
+        # CHECK FOR DATES DO SCRAP
+        days = self.read_missing(self.missing_file)
+        
+        if not days:
+            logging.info("No missing days to process.")
+            return  # EXIT IF NOTHING IS FOUND
+        
+        
+        self.setup_driver()
+        self.login()
+        self.ajax_finder()
+        
+        max_date = max(days)
+        
+        for day in days:
+            if day > max_date:
+                break
+            query_date = datetime.datetime.strptime(day, '%Y-%m-%d').strftime('%Y%m%d')
+            self.fetch_production_data(query_date)
+        
+        logging.info("Scraping completed. Quitting the driver.")
+        self.driver.quit()
 
-if __name__ == "__main__":
-    config_file = '/media/lucas/Files/2.Projetos/3.Solar/src/config.json'
-    missing_file = '/media/lucas/Files/2.Projetos/3.Solar/missing_days.csv'
-    
-    scraper = EMAWebScraper(config_file)
-    scraper.run(missing_file)
 
 
