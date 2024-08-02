@@ -5,6 +5,7 @@
     "service_dir": "/media/lucas/Files/2.Projetos/solar/.venv/bin/msedgedriver",
     "config_file_path": "/media/lucas/Files/2.Projetos/solar/src/config.json",
     "silver_dir": "/media/lucas/Files/2.Projetos/0.mylake/silver/solar_project",
+    "gold_dir": "/media/lucas/Files/2.Projetos/0.mylake/gold/solar_project",
     "done_folder":"/media/lucas/Files/2.Projetos/0.mylake/silver/solar_project/sql_table_done",
     "connection_string": "postgresql://postgres:12345@localhost:5432/postgres",
     "root_dir": "/media/lucas/Files/2.Projetos/solar/",

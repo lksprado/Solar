@@ -35,11 +35,11 @@ class Loader:
         self.cursor.execute(create_proc_query)
         self.conn.commit()
 
-    def load_csv_files_to_staging(self, input_folder):
+    def load_csv_files_to_staging(self):
         # Iterate through each CSV file in the input folder
-        for filename in os.listdir(input_folder):
+        for filename in os.listdir(self.silver_dir):
             if filename.endswith('.csv') and filename != 'transformation_status.csv':
-                file_path = os.path.join(input_folder, filename)
+                file_path = os.path.join(self.silver_dir, filename)
                 table_name = 'dw_lcs.tb_solar_stg'  # Table name
 
                 # Load CSV data into PostgreSQL table
@@ -65,14 +65,39 @@ class Loader:
                 os.rename(file_path, os.path.join(self.done_folder, filename))
 
     def run(self):
-        success = False
-
-        self.create_stored_procedure()
-        self.load_csv_files_to_staging()
-        self.trigger_stored_procedure()
-        success = True  # Mark as successful if no exceptions occurred
-        if success:
+        try:
+            # Load CSV files to the staging table
+            self.load_csv_files_to_staging()
+            
+            # Insert data from staging table to final table, handling duplicates
+            self.cursor.execute("""
+                INSERT INTO dw_lcs.tb_solar (date, energy, data_atualizacao)
+                SELECT s.date, s.energy, s.data_atualizacao
+                FROM dw_lcs.tb_solar_stg s
+                LEFT JOIN dw_lcs.tb_solar t
+                ON s.date = t.date AND s.energy = t.energy
+                WHERE t.date IS NULL AND t.energy IS NULL;
+            """)
+            
+            # Truncate the staging table
+            self.cursor.execute("TRUNCATE TABLE dw_lcs.tb_solar_stg;")
+            
+            # Commit the transaction
+            self.conn.commit()
+            
+            # Move processed files
             self.move_files()
-        self.close_connection()
+            
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            self.conn.rollback()  # Rollback in case of error
+        finally:
+            # Always close the connection
+            self.close_connection()
 
+if __name__ == "__main__":
+    
+    loader = Loader()
+    loader.run()
+    
 

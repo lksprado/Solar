@@ -51,3 +51,6 @@ class MissingDatesFinder:
         self.extract_dates_from_filenames()
         self.generate_missing_dates_csv()
 
+if __name__ == "__main__":
+    finder = MissingDatesFinder()
+    finder.run()

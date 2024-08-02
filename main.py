@@ -6,8 +6,9 @@ from src.missing import MissingDatesFinder
 from src.extraction import EMAWebScraper
 from src.transformation import TransformCSV
 from src.loading import Loader
+from src.gather_all import Gather
 
-# def main():
+
 finder = MissingDatesFinder()
 finder.run()
 
@@ -20,5 +21,5 @@ transformer.run()
 loader = Loader()
 loader.run()
 
-# if __name__ == "__main__":
-#     main()
+gather = Gather()
+gather.run()

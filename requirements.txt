@@ -1,4 +1,6 @@
+poetry
 selenium
 pandas
 psycopg2-binary
 pytest
+apache-airflow
