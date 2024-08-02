@@ -1,2 +1,6 @@
 project:
     name: solar
+webserver:
+  port: 8081
+postgres:
+  port: 5433
