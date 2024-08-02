@@ -4,28 +4,33 @@ import os
 import pandas as pd
 import json
 
-def gather_all(done_folder, output_file):
-    li = []
+class Gather:
+    def __init__(self, config_file = 'src/config.json'):
+        self.config_file = config_file
+        self.config = self.read_config()
+        self.silver_dir = self.config.get('silver_dir')
+        self.done_folder = self.config.get('done_folder')
+        self.gold_dir = self.config.get('gold_dir')          
     
-    for file in os.listdir(done_folder):
-        if file.endswith('.csv'):
-            df = pd.read_csv(os.path.join(done_folder, file), index_col=None, header=0)
-            li.append(df)
-    
-    combined_df = pd.concat(li, axis=0, ignore_index=True)
-    combined_df.to_csv(output_file, index=False)
+    # READING CONFIG FILE
+    def read_config(self):
+        with open(self.config_file, 'r') as file:
+            config_data = json.load(file)
+        return config_data
 
-def main():
-    config_file = "/media/lucas/Files/2.Projetos/solar/src/config.json"
-    
-    with open(config_file, 'r') as f:
-        config = json.load(f)
-    
-    done_folder = config['done_folder']
-    output_folder = config['output_folder']
-    output_file = os.path.join(output_folder, 'combined_data.csv')
-    
-    gather_all(done_folder, output_file)
+    def run(self):        
+        li = []
+        
+        for file in os.listdir(self.done_folder):
+            if file.endswith('.csv'):
+                df = pd.read_csv(os.path.join(self.done_folder, file), index_col=None, header=0)
+                li.append(df)
+        
+        combined_df = pd.concat(li, axis=0, ignore_index=True)
+        
+        destination = os.path.join(self.gold_dir, 'all_data.csv')
+        combined_df.to_csv(destination, index=False)
 
 if __name__ == "__main__":
-    main()
+    gather = Gather()
+    gather.run()    

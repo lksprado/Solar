@@ -30,7 +30,7 @@ class EMAWebScraper:
         self.service_dir = self.config.get('service_dir')
         self.missing_file = self.config.get('missing_file')
         
-        # READING CONFIG FILE
+    # READING CONFIG FILE
     def read_config(self):
         with open(self.config_file, 'r') as file:
             config_data = json.load(file)
@@ -54,7 +54,7 @@ class EMAWebScraper:
         edge_options.add_argument('--headless')
         edge_options.add_argument('--disable-gpu')
         edge_options.add_argument("--remote-debugging-port=9222")
-        service = Service(executable_path=self.servicedir)
+        service = Service(executable_path=self.service_dir)
         self.driver = webdriver.Edge(options=edge_options)
 
     # LOGGING IN
@@ -135,7 +135,7 @@ class EMAWebScraper:
             
             file_date = f"{query_date[:4]}-{query_date[4:6]}-{query_date[6:]}"
             
-            output_file = os.path.join(self.jsondir, f"hourly24_production_{file_date}.json")
+            output_file = os.path.join(self.bronze_dir, f"hourly24_production_{file_date}.json")
             
             with open(output_file, "w") as f:
                 json.dump(response.json(), f)
@@ -168,5 +168,6 @@ class EMAWebScraper:
         logging.info("Scraping completed. Quitting the driver.")
         self.driver.quit()
 
-
-
+if __name__ == "__main__":
+    scraper = EMAWebScraper()
+    scraper.run()

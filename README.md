@@ -1,20 +1,23 @@
 # HOME SOLAR PANEL DATA FROM ETL TO VIZ
 
 ### DESCRIPTION
-This is a personal project that emulates and end-to-end Data project applying data engineering concepts and using python best practices for coding (OOP).
+This is a personal project that emulates and end-to-end Data project applying data engineering concepts and best practices.
 It consists of 4 steps:
 
 1. Missing.py   
-Reads my landing (local) repository to identify missing dates and create a "missing_dates.csv" file for querying further in the flow;
+It fetches file dates from my landing directory and cross check with current date to get missing dates either from several days or just today;
 
 2. Extraction.py    
-Starts a webdriver instance, logs in the EmaApp System, navigates do desired page, make a Request for daily hourly energy production from the given days in "missing_dates.csv" 
+It starts a webdriver instance, logs in the EmaApp System, navigates do desired page, makes a Request for daily hourly energy production from the given days in "missing_dates.csv" 
 
 3. Transformation.py    
-Converts json to csv file, remove unecessary columns, parse date and creates csv files;
+Converts json to csv file, remove unecessary columns, parse date and creates csv files in a processed directory;
 
 4. Loading.py   
-Upload csv file contents to Postgres staging table and calls procedure to insert in the final table;
+Upload csv file contents from processed directory to Postgres staging table and calls function to insert in the final table, moves the loaded files to a subfolder;
+
+5. Gather.py
+Creates a singles csv with all the contents, for data visualization purposes
 
 ### RESULT
 The project is schedulled to run from a Airflow from docker container, daily, at 10pm.  
