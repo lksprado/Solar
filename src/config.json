@@ -7,7 +7,7 @@
     "silver_dir": "/media/lucas/Files/2.Projetos/0.mylake/silver/solar_project",
     "gold_dir": "/media/lucas/Files/2.Projetos/0.mylake/gold/solar_project",
     "done_folder":"/media/lucas/Files/2.Projetos/0.mylake/silver/solar_project/sql_table_done",
-    "connection_string": "postgresql://postgres:12345@localhost:5432/postgres",
+    "connection_string": "postgresql://postgres:pg12345@localhost:5432/postgres",
     "root_dir": "/media/lucas/Files/2.Projetos/solar/",
     "missing_file": "/media/lucas/Files/2.Projetos/solar/missing_days.csv",
     "transformed_files_list": "/media/lucas/Files/2.Projetos/0.mylake/silver/solar_project/transformation_status.csv"
