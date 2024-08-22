@@ -1,53 +1,36 @@
+from airflow import DAG
+from airflow.operators.python import PythonOperator
+from datetime import datetime, timedelta
 import sys
 import os
-from datetime import datetime
-from airflow.decorators import dag, task
-from airflow.operators.python import PythonOperator
-from airflow.utils.dates import days_ago
 
-# Ensure the src directory is in the Python path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+# Import the module
+from missing_json import main as find_missing_dates
 
-from src.missing import MissingDatesFinder 
-from src.extraction import EMAWebScraper
-from src.transformation import TransformCSV
-from src.loading import Loader
-from src.gather_all import Gather
+# Default arguments for the DAG
+default_args = {
+    'owner': 'airflow',
+    'depends_on_past': False,
+    'start_date': datetime(2024, 8, 18),
+    'email_on_failure': False,
+    'email_on_retry': False,
+    'retries': 1,
+    'retry_delay': timedelta(minutes=5),
+}
 
-@dag(
-    start_date=days_ago(1),
-    schedule="@daily",
+# Define the DAG
+with DAG(
+    'dag_missing_json',
+    default_args=default_args,
+    description='A DAG to find missing JSON dates and store them in a file',
+    schedule_interval=timedelta(days=1),
     catchup=False,
-    doc_md="This DAG runs a pipeline of tasks: missing dates detection, web scraping, CSV transformation, data loading, and data gathering.",
-    tags=["webscrapping"],
-)
-def pipeline():
-    @task
-    def missing():
-        finder = MissingDatesFinder()
-        finder.run()
-        
-    @task 
-    def extraction():
-        scraper = EMAWebScraper()
-        scraper.run()
-    
-    @task 
-    def transforming():
-        transformer = TransformCSV()
-        transformer.run()    
-        
-    @task 
-    def loading():
-        loader = Loader()
-        loader.run()
-    
-    @task 
-    def gathering():
-        gather = Gather()
-        gather.run()        
-    
-    # Set task dependencies
-    missing() >> extraction() >> transforming() >> loading() >> gathering()
+) as dag:
 
-pipeline_dag = pipeline()
+    # Task to find and save missing dates
+    task_find_missing_dates = PythonOperator(
+        task_id='find_missing_dates',
+        python_callable=find_missing_dates,
+    )
+
+    task_find_missing_dates

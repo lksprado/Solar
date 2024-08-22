@@ -53,6 +53,8 @@ class Loader:
     def trigger_stored_procedure(self):
         self.cursor.execute("CALL process_staging_data();")
         self.conn.commit()
+        
+        
 
     def close_connection(self):
         self.cursor.close()
