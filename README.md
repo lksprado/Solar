@@ -49,11 +49,3 @@ Creates a single csv with all the content, for data visualization purposes in Ta
 ### ANALYSIS
 The Viz can be accessed in the following link: https://public.tableau.com/app/profile/lucas8230/viz/HOMESOLARPANELPRODUCTION2021-2024/Painel1
 
-![alt text](image-1.png)
-
-![alt text](image-2.png)
-
-![alt text](image-3.png)
-
-![alt text](image-4.png)
-
