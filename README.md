@@ -1,51 +1,51 @@
-# HOME SOLAR PANEL DATA FROM ETL TO VIZ
+# Home Solar: From Scrape to Insights
 
-### MOTIVATION AND CHALLENGE
-This is a personal webscrapping project that emulates and end-to-end solution applying data engineering fundamentals and python developing best practices. The goal is to extract, transform, and visualize solar panel data from my family's home system. It is not designed to be replicable.
+Build a clean, automated pipeline that extracts and transforms production data from a home solar system with no public API. This repository focuses on robust extraction and transformation — designed to plug into a personal Airflow repository as a submodule. The data load/orchestration stage lives outside this repo by design.
 
-The overall challenge is to get the historical and current data from the home solar system without a proper API. It is necessary to log in into the website and get to a specific page that enables the API endpoint.
+Note on scope: This project is a submodule of a personal Airflow setup. The load stage is intentionally not included here.
 
-### TOOLS
-- Selenium: Automates the web interaction required for data extraction
-- Postgres: Database for storing and managing the collected data
+## Why This Exists
+- No official API: Data is hidden behind a login and a specific app view that enables an internal API.
+- Practical engineering: Demonstrates resilient scraping, structured transformations, and testable Python without over-engineering.
+- Personal analytics: Feeds a simple, consistent dataset for downstream visualization.
 
-### TECHNIQUES APPLIED:
-- OOP Object-Oriented Programming developing;
-- Data Warehousing and ETL concepts;
-- Pytest for testing functions;
-- Logging; 
+## What It Does
+- Logs into the solar provider’s portal and fetches historical and current production data.
+- Transforms raw JSON into tidy, analysis-ready DataFrames (hourly and daily summaries).
+- Writes control artifacts (e.g., missing date lists) to ensure continuity across runs.
 
-### FILE DESCRIPTIONS
-The structure is designed to resemble a DW enviroment and focus on prioritizing execution recording\
-`bronze/json_files`: Directory stores the extracted json files as a landing zone;\
-`hourly24_production_2024-08-15.json`: Json file sample;\
-`missing_dates.csv`: CSV file stores the dates that are missing from the `json_files` directory and writes the dates data was not collected;\
-`silver/csv_files`: Directory which the json data transformed is stored as csv;\
-`transformation_status.csv`: Logging file to store if transformation was success or not\
-`silver/sql_table_done`: Directory that moves the files once they are uploaded to Postgres
+## What It Doesn’t Do (Here)
+- Orchestration and loading to databases/data lake. These are handled by the parent Airflow repository where this module is consumed.
 
+## Tech Stack
+- Selenium: Reliable browser automation to reach the internal API endpoints.
+- Python + OOP: Clear separation of concerns and maintainability.
+- Pytest: Function-level tests for critical components.
+- Logging: Structured logs to aid debugging and observability.
 
-It consists of 4 steps:
+## Key Modules
+- `src/missing_raw.py`: Identifies dates with missing data and writes them to a control file.
+- `src/extraction.py`: Authenticates and pulls raw JSON from the portal (via Selenium-enabled flows).
+- `src/transforming.py`: Parses JSON to pandas DataFrames and produces hourly and daily aggregates.
+- `main.py`: Example runner wiring the steps together for local/debug usage.
 
-1. Missing.py   
-Cross-checks with the current date to identify missing dates and list them in a CSV file;
+Associated tests are in `tests/` for extraction, transformation, and (where applicable) database-related helpers.
 
-2. Extraction.py    
-It starts a Webdriver instance, logs into the EmaApp System, navigates to desired page, makes a GET request for daily hourly energy production from the given dates listing in "missing_dates.csv" file; 
+## Typical Flow
+1) Identify gaps: Generate/update a list of missing dates.
+2) Extract data: Log in, navigate to the correct view, and request per-date JSON.
+3) Transform data: Normalize, clean, and aggregate into hourly and daily tables.
 
-3. Transformation.py    
-Converts Json to csv file, remove unecessary columns, parses data and creates csv files in a processed directory;
+Downstream loading/orchestration is performed by Airflow in the parent repository.
 
-4. Loading.py   
-Uploads csv file contents from processed directory to Postgres staging table and calls function to insert in the final table, moves the loaded files to a subfolder;
+## Quick Start (Local)
+- Set credentials in `.env` (`USERNAME`, `PASSWORD`).
+- Run `python main.py` to execute the identify → extract → transform sequence.
+- Staging/output locations are configured inside `main.py` and via environment variables.
 
-5. Gather.py
-Creates a single csv with all the content, for data visualization purposes in Tableau
+## Visualization
+Public dashboard (sample): https://public.tableau.com/app/profile/lucas8230/viz/HOMESOLARPANELPRODUCTION2021-2024/Painel1
 
-### WORKFLOW
-![alt text](image.png)
-
-
-### ANALYSIS
-The Viz can be accessed in the following link: https://public.tableau.com/app/profile/lucas8230/viz/HOMESOLARPANELPRODUCTION2021-2024/Painel1
-
+## Notes
+- This is a personal, non-replicable setup tailored to a specific provider.
+- Network behavior and UI flows may change; scraping logic is built to be adaptable but may require updates over time.
