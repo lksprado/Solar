@@ -11,3 +11,4 @@ webserver_config.py
 .pytest_cache
 *.csv
 main.py
+__pycache__
