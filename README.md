@@ -1,51 +1,47 @@
-# Home Solar: From Scrape to Insights
+# Home Solar: Da Coleta aos Insights
+[English Version](https://github.com/lksprado/Solar/blob/main/README-en.md)
 
-Build a clean, automated pipeline that extracts and transforms production data from a home solar system with no public API. This repository focuses on robust extraction and transformation — designed to plug into a personal Airflow repository as a submodule. The data load/orchestration stage lives outside this repo by design.
+## O que é o projeto?
+É um pipeline que faz login em um sistema de geração solar, extrai e transforma dados de produção de um sistema IoT solar residencial sem API pública. Este repositório foca em extração e transformação — projetado para ser acoplado como submódulo a um repositório pessoal de Airflow.
 
-Note on scope: This project is a submodule of a personal Airflow setup. The load stage is intentionally not included here.
+**Notas sobre o escopo**:
+1. Este projeto é um submódulo de uma configuração pessoal de Airflow. A etapa de carga (load) não está intencionalmente incluída aqui.
+2. Trata-se de uma configuração pessoal, não replicável, ajustada a um provedor específico.
 
-## Why This Exists
-- No official API: Data is hidden behind a login and a specific app view that enables an internal API.
-- Practical engineering: Demonstrates resilient scraping, structured transformations, and testable Python without over-engineering.
-- Personal analytics: Feeds a simple, consistent dataset for downstream visualization.
+## Por que isso existe
+- Sem API oficial: Os dados ficam ocultos atrás de login e de uma visualização específica do app que habilita uma API interna.
+- Engenharia prática: Demonstra scraping resiliente, transformações estruturadas e Python testável sem over-engineering.
+- Analytics pessoal: Alimenta um conjunto de dados simples e consistente para visualização a jusante.
 
-## What It Does
-- Logs into the solar provider’s portal and fetches historical and current production data.
-- Transforms raw JSON into tidy, analysis-ready DataFrames (hourly and daily summaries).
-- Writes control artifacts (e.g., missing date lists) to ensure continuity across runs.
+## O que ele faz
+- Faz login no portal do provedor solar e busca dados históricos e atuais de produção.
+- Transforma JSON bruto em DataFrames organizados e prontos para análise (resumos horários e diários).
+- Escreve artefatos de controle (por exemplo, listas de datas faltantes) para garantir continuidade e idempotência entre execuções.
 
-## What It Doesn’t Do (Here)
-- Orchestration and loading to databases/data lake. These are handled by the parent Airflow repository where this module is consumed.
+## Stack tecnológica
+- Selenium: Automação de navegador confiável para alcançar os endpoints da API interna.
+- Python + OOP: Separação clara de responsabilidades e boa manutenibilidade.
+- Pytest: Testes em nível de função para componentes críticos.
+- Logging: Logs estruturados para facilitar depuração e observabilidade.
 
-## Tech Stack
-- Selenium: Reliable browser automation to reach the internal API endpoints.
-- Python + OOP: Clear separation of concerns and maintainability.
-- Pytest: Function-level tests for critical components.
-- Logging: Structured logs to aid debugging and observability.
+## Módulos principais
+- `src/missing_raw.py`: Identifica datas com dados ausentes no banco local e grava essas datas em um arquivo de controle.
+- `src/extraction.py`: Autentica e obtém o JSON bruto do portal (via fluxos habilitados por Selenium).
+- `src/transforming.py`: Converte JSON em DataFrames do pandas e produz agregações horárias e diárias.
+- `main.py`: Exemplo de execução que conecta as etapas para uso local/debug.
 
-## Key Modules
-- `src/missing_raw.py`: Identifies dates with missing data and writes them to a control file.
-- `src/extraction.py`: Authenticates and pulls raw JSON from the portal (via Selenium-enabled flows).
-- `src/transforming.py`: Parses JSON to pandas DataFrames and produces hourly and daily aggregates.
-- `main.py`: Example runner wiring the steps together for local/debug usage.
+Os testes associados estão em `tests/` para extração, transformação e, quando aplicável, helpers relacionados a banco de dados.
 
-Associated tests are in `tests/` for extraction, transformation, and (where applicable) database-related helpers.
+## Fluxo típico
+1) Identificar lacunas: Gerar/atualizar a lista de datas faltantes.
+2) Extrair dados: Fazer login, navegar até a visualização correta e requisitar o JSON por data.
+3) Transformar dados: Normalizar, limpar e agregar em tabelas horárias e diárias.
 
-## Typical Flow
-1) Identify gaps: Generate/update a list of missing dates.
-2) Extract data: Log in, navigate to the correct view, and request per-date JSON.
-3) Transform data: Normalize, clean, and aggregate into hourly and daily tables.
+O carregamento/orquestração a jusante é realizado pelo Airflow no repositório privado pai.
 
-Downstream loading/orchestration is performed by Airflow in the parent repository.
+## Visualizações
+Dashboard: https://public.tableau.com/app/profile/lucas8230/viz/HOMESOLARPANELPRODUCTION2021-2024/Painel1
 
-## Quick Start (Local)
-- Set credentials in `.env` (`USERNAME`, `PASSWORD`).
-- Run `python main.py` to execute the identify → extract → transform sequence.
-- Staging/output locations are configured inside `main.py` and via environment variables.
+![alt text](images/SUMMARY.png)
+![alt text](images/DAILY.png)
 
-## Visualization
-Public dashboard (sample): https://public.tableau.com/app/profile/lucas8230/viz/HOMESOLARPANELPRODUCTION2021-2024/Painel1
-
-## Notes
-- This is a personal, non-replicable setup tailored to a specific provider.
-- Network behavior and UI flows may change; scraping logic is built to be adaptable but may require updates over time.
