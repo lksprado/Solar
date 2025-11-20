@@ -12,3 +12,4 @@ webserver_config.py
 *.csv
 main.py
 __pycache__
+*.pyc
