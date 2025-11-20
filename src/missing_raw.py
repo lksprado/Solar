@@ -25,8 +25,8 @@ def _get_first(db, sql: str):
 def identify_and_write_missing_dates(db, output_filepath)-> bool:    
     logger.info("Obtendo data maxima no DW")
 
-    query_daily = f"SELECT MAX(date) :: DATE AS DT FROM raw.solar__daily_energy"
-    query_hourly = f"SELECT MAX(datetime) :: DATE AS DT FROM raw.solar__hourly_energy"
+    query_daily = f"SELECT MAX(date) :: DATE AS DT FROM raw.solar_daily_energy"
+    query_hourly = f"SELECT MAX(datetime) :: DATE AS DT FROM raw.solar_hourly_energy"
     
     result_daily  = _get_first(db, query_daily)
     result_hourly = _get_first(db, query_hourly)
