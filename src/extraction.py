@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 
 class EMAWebScraper:
-    def __init__(self, credentials:dict, output_filepath:Path, date_list:list, selenium: str | None = "http://selenium_container:4444/wd/hub"):
+    def __init__(self, credentials:dict, output_filepath:Path, date_list:list, selenium: str | None = "http://localhost:4444/wd/hub"):
         """Fornecer uma dicionario com as chaves username e password"""
         self.driver = None
         # self.username = Variable.get("apsystem_user")
