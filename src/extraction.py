@@ -19,8 +19,12 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
+
+
+
+
 class EMAWebScraper:
-    def __init__(self, credentials:dict, output_filepath:Path, control_file:Path, selenium: str | None = "http://selenium_container:4444/wd/hub"):
+    def __init__(self, credentials:dict, output_filepath:Path, date_list:list, selenium: str | None = "http://selenium_container:4444/wd/hub"):
         """Fornecer uma dicionario com as chaves username e password"""
         self.driver = None
         # self.username = Variable.get("apsystem_user")
@@ -31,16 +35,9 @@ class EMAWebScraper:
         self.selenium_url = selenium
         self.cookies = None
         self.user_id = None
-        self.missing_file = Path(control_file)
+        self.missing_dates = date_list
         self.output_filepath = Path(output_filepath)
         
-    # IDENTIFY MISSING DAYS AND APPEND TO LIST
-    def read_missing(self):
-        days = []
-        with open(self.missing_file, "r") as file:
-            for line in file:
-                days.append(line.split(",")[0].strip())
-        return days
 
     # SETTING UP WEBDRIVER
     def setup_driver(self):
@@ -166,15 +163,14 @@ class EMAWebScraper:
     def run(self):
         # CHECK FOR DATES DO SCRAP
         logger.info("Iniciando extracao...")
-        days = self.read_missing()
 
         self.setup_driver()
         self.login()
         self.ajax_finder()
 
-        max_date = max(days)
+        max_date = max(self.missing_dates)
 
-        for day in days:
+        for day in self.missing_dates:
             if day > max_date:
                 break
             query_date = datetime.datetime.strptime(day, "%Y-%m-%d").strftime("%Y%m%d")
