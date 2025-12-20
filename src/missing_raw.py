@@ -79,7 +79,9 @@ if __name__ == '__main__':
                         )
     
     try:
-        identify_missing_dates(db=db_con)
+        dts = identify_missing_dates(db=db_con)
     finally:
         db_con.close()
+    
+    print(dts)
 

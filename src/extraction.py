@@ -184,3 +184,4 @@ class EMAWebScraper:
 def extraction():
     scraper = EMAWebScraper()
     scraper.run()
+
