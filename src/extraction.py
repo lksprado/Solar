@@ -45,7 +45,7 @@ class EMAWebScraper:
         chrome_options.add_argument("--headless")
         chrome_options.add_argument("--disable-gpu")
         # chrome_options.add_argument("--no-sandbox")
-        chrome_options.add_argument("--remote-debugging-port=9222")
+        # chrome_options.add_argument("--remote-debugging-port=9222")
         
         if self.selenium_url:
             self.driver = webdriver.Remote(
@@ -164,22 +164,20 @@ class EMAWebScraper:
         # CHECK FOR DATES DO SCRAP
         logger.info("Iniciando extracao...")
 
-        self.setup_driver()
-        self.login()
-        self.ajax_finder()
 
-        max_date = max(self.missing_dates)
-
-        for day in self.missing_dates:
-            if day > max_date:
-                break
-            query_date = datetime.datetime.strptime(day, "%Y-%m-%d").strftime("%Y%m%d")
-            logger.info(f"Extraindo: {query_date}")
-            self.fetch_production_data(query_date)
-
-        self.driver.quit()
-        logger.info("Scrap finalizado.")
-
+        try:
+            self.setup_driver()
+            self.login()
+            self.ajax_finder()
+            
+            for day in self.missing_dates:
+                query_date = datetime.datetime.strptime(day, "%Y-%m-%d").strftime("%Y%m%d")
+                logger.info(f"Extraindo: {query_date}")
+                self.fetch_production_data(query_date)
+        finally:
+            if self.driver:
+                self.driver.quit()
+                logger.info("Driver encerrado.")
 
 def extraction():
     scraper = EMAWebScraper()
