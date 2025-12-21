@@ -1,178 +1,217 @@
+from dataclasses import dataclass
+from pathlib import Path
+import datetime
+import json
+import logging
+import os
+import requests
+
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support.ui import WebDriverWait, Select
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import TimeoutException
-from selenium.webdriver.support.ui import Select
-from pathlib import Path
-import requests
-import time
-import datetime
-import json
 
-import logging 
+# ---------------------------------------------------------------------
+# LOGGING
+# ---------------------------------------------------------------------
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger(__name__)
 
+# ---------------------------------------------------------------------
+# CONFIG DATA CLASSES (SÓ DADOS)
+# ---------------------------------------------------------------------
+@dataclass
+class SeleniumConfig:
+    remote_url: str | None = None
+    headless: bool = True
+    window_size: str = "1920,1080"
+    user_agent: str | None = (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/128.0.0.0 Safari/537.36"
+    )
 
-class EMAWebScraper:
-    def __init__(self, credentials:dict, output_filepath:Path, date_list:list, selenium: str | None = "http://localhost:4444/wd/hub"):
-        """Fornecer uma dicionario com as chaves username e password"""
-        self.driver = None
-        # self.username = Variable.get("apsystem_user")
-        # self.password = Variable.get("apsystem_pw")
-        self.username = credentials.get('username')
-        self.password = credentials.get('password')
-        self.base_url = "https://apsystemsema.com/ema/index.action"
-        self.selenium_url = selenium
-        self.cookies = None
-        self.user_id = None
-        self.missing_dates = date_list
-        self.output_filepath = Path(output_filepath)
-        
+@dataclass
+class Credentials:
+    username: str
+    password: str
 
-    # SETTING UP WEBDRIVER
-    def setup_driver(self):
-        chrome_options = Options()
-        chrome_options.add_argument("--headless")
-        chrome_options.add_argument("--disable-gpu")
-        # chrome_options.add_argument("--no-sandbox")
-        # chrome_options.add_argument("--remote-debugging-port=9222")
-        
-        if self.selenium_url:
-            self.driver = webdriver.Remote(
-                command_executor=self.selenium_url, options=chrome_options
-            )
-            
-        else:
-            chrome_options = Options()
-            chrome_options.add_argument("--disable-gpu")
-            # chrome_options.add_argument("--no-sandbox")
-            chrome_options.add_argument("--remote-debugging-port=9222")
-            chrome_options.add_argument(
-                "user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                "AppleWebKit/537.36 (KHTML, like Gecko) "
-                "Chrome/128.0.0.0 Safari/537.36"
-            )
-            self.driver = webdriver.Chrome(options=chrome_options)
+@dataclass
+class PathsConfig:
+    staging_dir: Path
 
-    # LOGGING IN
-    def login(self):
-        try:
-            self.driver.get(self.base_url)
-            username_field = WebDriverWait(self.driver, 5).until(
-                EC.element_to_be_clickable((By.ID, "username"))
-            )
-            password_field = WebDriverWait(self.driver, 5).until(
-                EC.element_to_be_clickable((By.ID, "password"))
-            )
-            username_field.send_keys(self.username)
-            password_field.send_keys(self.password)
-            
-            login_button = WebDriverWait(self.driver, 5).until(
-                EC.element_to_be_clickable((By.ID, "Login"))
-            )
-            login_button.click()
-            time.sleep(3)
-        except TimeoutException as e:
-            logger.error(
-                "Erro de Timeout esperando elemento clickavel: %s",
-                str(e),
-            )
-        except Exception as e:
-            logger.error("Erro inesperado: %s", str(e))
+# ---------------------------------------------------------------------
+# WEBDRIVER
+# ---------------------------------------------------------------------
+def setup_driver(config: SeleniumConfig) -> webdriver.Chrome:
+    chrome_options = Options()
 
-    # GETTING THE AJAX
-    def ajax_finder(self):
-        wait = WebDriverWait(self.driver, 30)
+    if config.headless:
+        chrome_options.add_argument("--headless=new")
 
-        report_button = wait.until(
-            EC.presence_of_element_located((By.ID, "report_head"))
-        )
-        self.driver.execute_script("arguments[0].click();", report_button)
+    chrome_options.add_argument("--disable-gpu")
+    chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--disable-dev-shm-usage")
+    chrome_options.add_argument(f"--window-size={config.window_size}")
 
-        system_data_button = wait.until(
-            EC.presence_of_element_located((By.ID, "systemDataCustomer"))
-        )
-        self.driver.execute_script("arguments[0].click();", system_data_button)
+    if config.user_agent:
+        chrome_options.add_argument(f"--user-agent={config.user_agent}")
 
-        ecu_data = wait.until(
-            EC.presence_of_element_located((By.ID, "ecuData"))
-        )
-        self.driver.execute_script("arguments[0].click();", ecu_data)
-
-        wait.until(
-            EC.frame_to_be_available_and_switch_to_it((By.ID, "configuration_body"))
+    if config.remote_url:
+        logger.info("Iniciando WebDriver remoto")
+        return webdriver.Remote(
+            command_executor=config.remote_url,
+            options=chrome_options,
         )
 
-        select = Select(wait.until(EC.presence_of_element_located((By.ID, "chart"))))
-        select.select_by_value("2")
+    logger.info("Iniciando WebDriver local")
+    return webdriver.Chrome(options=chrome_options)
 
-        self.driver.switch_to.default_content()
+# ---------------------------------------------------------------------
+# LOGIN
+# ---------------------------------------------------------------------
+def login(driver: webdriver.Chrome, creds: Credentials):
+    logger.info("Realizando login")
 
+    driver.get("https://apsystemsema.com/ema/index.action")
+    wait = WebDriverWait(driver, 30)
 
-    # REQUESTING THROUGH AJAX
-    def fetch_production_data(self, query_date):
-        try:
-            self.cookies = self.driver.get_cookies()
-            headers = {
-                "Cookie": "; ".join(
-                    [f"{cookie['name']}={cookie['value']}" for cookie in self.cookies]
-                ),
-                "User-Agent": "Mozilla/5.0 (Windowstime.sleep(3) NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
-            }
-            url = "https://apsystemsema.com/ema/ajax/getReportApiAjax/getHourlyEnergyOnCurrentDayAjax"
+    wait.until(EC.presence_of_element_located((By.ID, "username"))).send_keys(creds.username)
+    wait.until(EC.presence_of_element_located((By.ID, "password"))).send_keys(creds.password)
+    wait.until(EC.element_to_be_clickable((By.ID, "Login"))).click()
 
-            for cookie in self.cookies:
-                if cookie["name"] == "userId":
-                    self.user_id = cookie["value"]
+    # Confirma login bem-sucedido
+    wait.until(EC.presence_of_element_located((By.ID, "report_head")))
+    logger.info("Login realizado com sucesso")
 
-            payload = {
-                "selectedValue": "216200001531",
-                "queryDate": query_date,
-                "systemId": self.user_id,
-                "userId": self.user_id,
-            }
-            response = requests.post(url, headers=headers, data=payload)
+# ---------------------------------------------------------------------
+# NAVEGAÇÃO ATÉ O RELATÓRIO
+# ---------------------------------------------------------------------
+def navigate_to_report(driver: webdriver.Chrome):
+    logger.info("Navegando até relatório")
 
-            file_date = f"{query_date[:4]}-{query_date[4:6]}-{query_date[6:]}"
+    wait = WebDriverWait(driver, 30)
 
-            # STAGING AREA
-            output_file = self.output_filepath / f"hourly24_production_{file_date}.json"
+    report = wait.until(EC.presence_of_element_located((By.ID, "report_head")))
+    driver.execute_script("arguments[0].click();", report)
 
-            with open(output_file, "w") as f:
-                json.dump(response.json(), f)
-                
-            logger.info(f"Extracao salva em {output_file}")
-        except requests.exceptions.RequestException as e:
-            logger.error("Erro de requisicao HTTP: %s", str(e))
-        except Exception as e:
-            logger.error("Erro inesperado: %s", str(e))
+    system_data = wait.until(EC.presence_of_element_located((By.ID, "systemDataCustomer")))
+    driver.execute_script("arguments[0].click();", system_data)
 
-    def run(self):
-        # CHECK FOR DATES DO SCRAP
-        logger.info("Iniciando extracao...")
+    ecu_data = wait.until(EC.presence_of_element_located((By.ID, "ecuData")))
+    driver.execute_script("arguments[0].click();", ecu_data)
 
+    wait.until(EC.frame_to_be_available_and_switch_to_it((By.ID, "configuration_body")))
 
-        try:
-            self.setup_driver()
-            self.login()
-            self.ajax_finder()
-            
-            for day in self.missing_dates:
-                query_date = datetime.datetime.strptime(day, "%Y-%m-%d").strftime("%Y%m%d")
-                logger.info(f"Extraindo: {query_date}")
-                self.fetch_production_data(query_date)
-        finally:
-            if self.driver:
-                self.driver.quit()
-                logger.info("Driver encerrado.")
+    Select(
+        wait.until(EC.presence_of_element_located((By.ID, "chart")))
+    ).select_by_value("2")
 
-def extraction():
-    scraper = EMAWebScraper()
-    scraper.run()
+    driver.switch_to.default_content()
+    logger.info("Relatório configurado")
 
+# ---------------------------------------------------------------------
+# EXTRAÇÃO VIA AJAX
+# ---------------------------------------------------------------------
+def fetch_production_data(
+    driver: webdriver.Chrome,
+    query_date: str,
+    output_dir: Path,
+):
+    cookies = driver.get_cookies()
+
+    user_id = next(
+        c["value"] for c in cookies if c["name"] == "userId"
+    )
+
+    headers = {
+        "Cookie": "; ".join(f"{c['name']}={c['value']}" for c in cookies),
+        "User-Agent": "Mozilla/5.0 (Windowstime.sleep(3) NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+    }
+
+    payload = {
+        "selectedValue": "216200001531",
+        "queryDate": query_date,
+        "systemId": user_id,
+        "userId": user_id,
+    }
+
+    url = "https://apsystemsema.com/ema/ajax/getReportApiAjax/getHourlyEnergyOnCurrentDayAjax"
+
+    response = requests.post(url, headers=headers, data=payload)
+    response.raise_for_status()
+
+    file_date = f"{query_date[:4]}-{query_date[4:6]}-{query_date[6:]}"
+    output_file = output_dir / f"hourly24_production_{file_date}.json"
+
+    output_dir.mkdir(parents=True, exist_ok=True)
+    output_file.write_text(json.dumps(response.json(), ensure_ascii=False))
+
+    logger.info(f"Extração salva em {output_file}")
+
+# ---------------------------------------------------------------------
+# PIPELINE ORQUESTRADOR
+# ---------------------------------------------------------------------
+def run_pipeline(
+    selenium_config: SeleniumConfig,
+    creds: Credentials,
+    paths: PathsConfig,
+    dates: list[str],
+):
+    driver = setup_driver(selenium_config)
+
+    try:
+        login(driver, creds)
+        navigate_to_report(driver)
+
+        for day in dates:
+            query_date = datetime.datetime.strptime(
+                day, "%Y-%m-%d"
+            ).strftime("%Y%m%d")
+
+            logger.info(f"Extraindo dados de {query_date}")
+            fetch_production_data(driver, query_date, paths.staging_dir)
+
+    finally:
+        driver.quit()
+        logger.info("WebDriver encerrado")
+
+# ---------------------------------------------------------------------
+# EXECUÇÃO LOCAL
+# ---------------------------------------------------------------------
+if __name__ == "__main__":
+    from dotenv import load_dotenv
+
+    load_dotenv()
+
+    creds = Credentials(
+        username=os.getenv("LOGIN"),
+        password=os.getenv("PW"),
+    )
+
+    selenium_config = SeleniumConfig(
+        remote_url=None,   # usar Selenium local
+        headless=False,
+    )
+
+    paths = PathsConfig(
+        staging_dir=Path("./staging"),
+    )
+
+    dates = [
+        "2025-12-07", "2025-12-08", "2025-12-09", "2025-12-10",
+        "2025-12-11", "2025-12-12", "2025-12-13", "2025-12-14",
+        "2025-12-15", "2025-12-16", "2025-12-17", "2025-12-18",
+        "2025-12-19", "2025-12-20",
+    ]
+
+    run_pipeline(
+        selenium_config=selenium_config,
+        creds=creds,
+        paths=paths,
+        dates=dates,
+    )
