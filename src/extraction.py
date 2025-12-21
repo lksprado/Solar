@@ -19,10 +19,6 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-
-
-
-
 class EMAWebScraper:
     def __init__(self, credentials:dict, output_filepath:Path, date_list:list, selenium: str | None = "http://localhost:4444/wd/hub"):
         """Fornecer uma dicionario com as chaves username e password"""
@@ -92,35 +88,32 @@ class EMAWebScraper:
 
     # GETTING THE AJAX
     def ajax_finder(self):
-        report_button = WebDriverWait(self.driver, 10).until(
-            EC.element_to_be_clickable((By.ID, "report_head"))
+        wait = WebDriverWait(self.driver, 30)
+
+        report_button = wait.until(
+            EC.presence_of_element_located((By.ID, "report_head"))
         )
-        report_button.click()
+        self.driver.execute_script("arguments[0].click();", report_button)
 
-        system_data_button = WebDriverWait(self.driver, 10).until(
-            EC.element_to_be_clickable((By.ID, "systemDataCustomer"))
+        system_data_button = wait.until(
+            EC.presence_of_element_located((By.ID, "systemDataCustomer"))
         )
-        system_data_button.click()
+        self.driver.execute_script("arguments[0].click();", system_data_button)
 
-        ecu_data = WebDriverWait(self.driver, 15).until(
-            EC.element_to_be_clickable((By.ID, "ecuData"))
+        ecu_data = wait.until(
+            EC.presence_of_element_located((By.ID, "ecuData"))
         )
-        ecu_data.click()
+        self.driver.execute_script("arguments[0].click();", ecu_data)
 
-        # WAIT FOR IFRAME AND SWITCH TO IT
-        iframe = WebDriverWait(self.driver, 20).until(
-            EC.presence_of_element_located((By.XPATH, '//*[@id="configuration_body"]'))
+        wait.until(
+            EC.frame_to_be_available_and_switch_to_it((By.ID, "configuration_body"))
         )
-        self.driver.switch_to.frame(iframe)
 
-        select = Select(self.driver.find_element(By.ID, "chart"))
-
+        select = Select(wait.until(EC.presence_of_element_located((By.ID, "chart"))))
         select.select_by_value("2")
 
-        time.sleep(3)
-
-        # SWITCH BACK TO DEFAULT CONTENT
         self.driver.switch_to.default_content()
+
 
     # REQUESTING THROUGH AJAX
     def fetch_production_data(self, query_date):
