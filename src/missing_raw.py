@@ -68,6 +68,15 @@ def write_list_to_csv(input_ls: list, output_filepath):
             writer.writerow([missing_date])
     logger.info(f"Arquivo salvo em: {output_filepath}")
 
+def identify_and_write_missing_dates(db, output_filepath):
+    missing_dates = identify_missing_dates(db)
+    if missing_dates:
+        write_list_to_csv(missing_dates, output_filepath)
+    else:
+        with open(output_filepath, mode='w') as file:
+            pass
+        logger.info(f"Arquivo de controle limpo: {output_filepath}")
+
 if __name__ == '__main__':
     import psycopg2
     

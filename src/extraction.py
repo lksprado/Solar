@@ -130,7 +130,7 @@ def fetch_production_data(
 
     headers = {
         "Cookie": "; ".join(f"{c['name']}={c['value']}" for c in cookies),
-        "User-Agent": "Mozilla/5.0 (Windowstime.sleep(3) NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
     }
 
     payload = {
