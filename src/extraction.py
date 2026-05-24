@@ -163,22 +163,35 @@ def run_pipeline(
     dates: list[str],
 ):
     driver = setup_driver(selenium_config)
+    failed_dates = []
 
     try:
         login(driver, creds)
         navigate_to_report(driver)
 
         for day in dates:
-            query_date = datetime.datetime.strptime(
-                day, "%Y-%m-%d"
-            ).strftime("%Y%m%d")
+            try:
+                query_date = datetime.datetime.strptime(
+                    day, "%Y-%m-%d"
+                ).strftime("%Y%m%d")
 
-            logger.info(f"Extraindo dados de {query_date}")
-            fetch_production_data(driver, query_date, paths.staging_dir)
+                logger.info(f"Extraindo dados de {query_date}")
+                fetch_production_data(driver, query_date, paths.staging_dir)
+            except Exception:
+                failed_dates.append(day)
+                logger.exception(
+                    "Falha ao extrair dados de %s. Pulando para a próxima data.",
+                    day,
+                )
 
     finally:
         driver.quit()
         logger.info("WebDriver encerrado")
+
+    if failed_dates:
+        logger.warning("Datas não extraídas: %s", ", ".join(failed_dates))
+
+    return failed_dates
 
 # ---------------------------------------------------------------------
 # EXECUÇÃO LOCAL
